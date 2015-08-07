@@ -22,11 +22,11 @@ browser.click("input[id='u_0_v']")
 browser.wait(3)
 browser.load("https://www.facebook.com/happybean.shih/groups" ,load_timeout=25, tries=3)    
 browser.wait(3)
-f=codecs.open("c:/tmp/test.txt",'wb','utf-8')
+#f=codecs.open("c:/tmp/test.txt",'wb','utf-8')
 #mystr=browser.html
 mystr=unicode(browser.webframe.toHtml().toUtf8(), encoding="UTF-8")
 
-f.write(mystr)
+#f.write(mystr)
 print mystr
-f.close()
+#f.close()
 browser.close()
