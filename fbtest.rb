@@ -72,7 +72,7 @@ client[:group_member].find.each do |doc|
 	member = doc['member']
 	member.each do |member_id,member_name|
 		#puts "#{member_id}:#{member_name}"
-		begin
+		#begin
 			begin
    				user = get_user_group(member_id,member_name,browser)
 				if user == 'no group'
@@ -88,10 +88,10 @@ client[:group_member].find.each do |doc|
 					end
 				end
 			end until user != '404'
-		rescue Exception => e
-			puts "Has error <#{e}> of \"#{member_name}\""
-			next
-		end
+		#rescue Exception => e
+		#	puts "Has error <#{e}> of \"#{member_name}\""
+		#	next
+		#end
 	end
 end
 #=end
