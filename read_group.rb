@@ -20,3 +20,8 @@ end
 uniuqe_group_count =  uniuqe_group.keys.size
 puts "Total groups : #{group_count}"
 puts "Total uniuqe groups : #{uniuqe_group_count}"
+File.open('./unique_group.txt','w+') do |output|
+	uniuqe_group.keys.each do |ele|
+		output.puts ele
+	end
+end
