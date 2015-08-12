@@ -9,12 +9,12 @@ def login_fb()
 	browser = Selenium::WebDriver.for(:firefox, :http_client => client)
 	#browser.manage.timeouts.page_load = 2
 	#browser.manage.timeouts.implicit_wait = 3  #Random.new.rand(3..10)
-	browser.navigate.to "https://www.facebook.com/"
+	browser.navigate.to "https://www.facebook.com/?stype=lo&jlou=AfcYD6Lju9OkqvS1jxUhRetnQYL1RezjrnToVKZbvJGP3earH2j7rRw6wfTfGvCbH5aHAWU7R3f-ze7Kai2QqUQ9TNYNhP0OOhgg_PHNGsvvzA&smuh=3839&lh=Ac8anE4YQcMNMp-o"
 	email_field = browser.find_element(:id, 'email')
 	password_field = browser.find_element(:id, 'pass')
 	buton_field = browser.find_element(:id, 'u_0_v')
-	email_field.send_keys 'c300.sstc.itri@gmail.com'
-	password_field.send_keys 'sstcc300'
+	email_field.send_keys 'kaogaau@gmail.com'
+	password_field.send_keys 'cksh1300473'
 	buton_field.submit
 	browser
 end
