@@ -4,12 +4,14 @@ require './mongo_client'
 require 'bson'
 def login_fb()
 	#login my fb
-	client = Selenium::WebDriver::Remote::Http::Default.new
-  	client.timeout = 180 # seconds
-	browser = Selenium::WebDriver.for(:firefox, :http_client => client)
+	#client = Selenium::WebDriver::Remote::Http::Default.new
+  	#client.timeout = 180 # seconds
+	#browser = Selenium::WebDriver.for(:phantomjS ) #:http_client => client)
+	#browser = Selenium::WebDriver.for(:remote, :url => "http://localhost:9134")
+	browser = Selenium::WebDriver.PhantomJS()
 	#browser.manage.timeouts.page_load = 2
 	#browser.manage.timeouts.implicit_wait = 3  #Random.new.rand(3..10)
-	browser.navigate.to "https://www.facebook.com/?stype=lo&jlou=AfcYD6Lju9OkqvS1jxUhRetnQYL1RezjrnToVKZbvJGP3earH2j7rRw6wfTfGvCbH5aHAWU7R3f-ze7Kai2QqUQ9TNYNhP0OOhgg_PHNGsvvzA&smuh=3839&lh=Ac8anE4YQcMNMp-o"
+	browser.navigate.to "https://www.facebook.com/?stype=lo&jlou=AfdMSg6Kgrog3Qb1jKj20qno0Dz3ooGIaclbPKtC-hMIffGc-P2kizsIgZ5RAbtell3xURYGX497Q-qt9020eNtPxbP6nVlnZXj3ZVz7PnL0og&smuh=3839&lh=Ac9haStlCaeNkLtg"
 	email_field = browser.find_element(:id, 'email')
 	password_field = browser.find_element(:id, 'pass')
 	buton_field = browser.find_element(:id, 'u_0_v')
@@ -39,12 +41,12 @@ def get_user_group(app_scoped_user_id,user_name,browser)
 		sleep Random.new.rand(1..10)
 		group_url = browser.current_url
 		if group_url != person_url
-			user_group = Array.new(0)
+			user_group = Hash.new(0)
 			html_str = browser.page_source
 			html_nokdoc = Nokogiri::HTML(html_str)#get group html
 			tag_set = html_nokdoc.xpath("//div[@class='mbs fwb']/a")
 			tag_set.each do |tag|
-				user_group << tag.text
+				user_group[tag['data-hovercard'].split('=')[1]] = tag.text
 			end
 			return user_group
 		else#no group
@@ -56,45 +58,69 @@ def get_user_group(app_scoped_user_id,user_name,browser)
 		return user_group
 	end
 end
+def main
+	no_group_count = 0
+	_404_count = 0
+	has_group_count = 0
+	error_count = 0
+	browser = login_fb()
 
-no_group_count = 0
-_404_count = 0
-has_group_count = 0
-browser = login_fb()
+	Mongo::Logger.logger.level = ::Logger::FATAL
+	client = mongo_client([ '192.168.26.180:27017' ],'fb_group','admin','12345')
+	#doc_set = client[:user_group].find({:user_group_status => "has group",:latest_update_time => { "$lt" => Time.now - 360000000 }})
+	doc_set = client[:user_group].find({:user_group_status => "never update"})
+	puts "Get #{doc_set.count.to_i} user data need to update group"
 
-Mongo::Logger.logger.level = ::Logger::FATAL
-client = mongo_client([ '192.168.26.180:27017' ],'fb_group','admin','12345')
-doc_set = client[:user_group].find("latest_update_time" => { "$lt" => Time.now - 1800 },"user_group_status" => "never update")
-
-puts "Get #{doc_set.count.to_i} user data need to update group"
-
-doc_set.each do |doc|
-   	user_group = get_user_group(doc['user_id'],doc['user_name'],browser)
-	if user_group == 'no group'
-		result = client[:user_group].find(:user_id => doc['user_id']).update_one('$set' => { :user_group_status => "no group",:latest_update_time => Time.now })
-		if result.n == 1
-			no_group_count += 1
-			puts "\"#{doc['user_name']}\"...no_group(#{no_group_count})"
-		end
-	elsif user_group == '404'
-		result = client[:user_group].find(:user_id => doc['user_id']).update_one('$set' => { :user_group_status => "404",:latest_update_time => Time.now })
-		if result.n == 1
-			_404_count += 1
-			puts "\"#{doc['user_name']}\"...404(#{_404_count})"
-		end
-	else
-		result = client[:user_group].find(:user_id => doc['user_id']).update_one('$set' => { :user_group_status => "has group",:user_group => user_group,:latest_update_time => Time.now })
-		if result.n == 1
-			has_group_count += 1
-			puts "\"#{doc['user_name']}\"....has_group(#{has_group_count})"
+	doc_set.each do |doc|
+		begin
+		   	user_group = get_user_group(doc['user_id'],doc['user_name'],browser)
+			if user_group == 'no group' or user_group.size == 0
+				result = client[:user_group].find(:user_id => doc['user_id']).update_one('$set' => { :user_group_status => "no group",:latest_update_time => Time.now })
+				if result.n == 1
+					no_group_count += 1
+					puts "\"#{doc['user_name']}\"...no_group(#{no_group_count})"
+				end
+			elsif user_group == '404'
+				result = client[:user_group].find(:user_id => doc['user_id']).update_one('$set' => { :user_group_status => "404",:latest_update_time => Time.now })
+				if result.n == 1
+					_404_count += 1
+					puts "\"#{doc['user_name']}\"...404(#{_404_count})"
+				end
+			else
+				result = client[:user_group].find(:user_id => doc['user_id']).update_one('$set' => { :user_group_status => "has group",:user_group => user_group,:latest_update_time => Time.now })
+				if result.n == 1
+					has_group_count += 1
+					puts "\"#{doc['user_name']}\"....has_group(#{has_group_count})"
+				end
+			end
+		rescue  => ex
+			#puts ex.message
+			result = client[:user_group].find(:user_id => doc['user_id']).update_one('$set' => { :user_group_status => "error",:user_group => Hash.new(0),:latest_update_time => Time.now })
+  			if result.n == 1
+  				error_count += 1
+  				puts "\"#{doc['user_name']}\"....has_error(#{error_count})"
+  			end
+  			#puts ex.backtrace.join("\n")
+  			next
 		end
 	end
+	puts "error_count : #{error_count}"
+	puts "404_count : #{_404_count}"
+	puts "no_group_count : #{no_group_count}"
+	puts "has_group_count : #{has_group_count}"
+	puts "total :  #{no_group_count + _404_count + has_group_count + error_count}"
+	browser.quit
 end
 
-browser.quit
-puts "no_group_count : #{no_group_count}"
-puts "404_count : #{_404_count}"
-puts "has_group_count : #{has_group_count}"
-puts "total :  #{no_group_count + _404_count + has_group_count}"
+	time_start = Time.now
+ 	puts "Start: #{time_start}"
+  	puts "========================================"
+  	main
+	time_end = Time.now
+  	puts "========================================"
+  	puts "End: #{time_end}"
+  	puts "Time cost: #{time_end - time_start}"
+
+
 #get_user_group("1020407414645839","Dissy Chou",browser)
 #get_user_group("287292","Dissy Chou",browser)
