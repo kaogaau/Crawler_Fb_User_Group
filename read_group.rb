@@ -24,10 +24,13 @@ has_group_set.each do |doc|
 	end
 end
 #unique_group_id_count =  unique_group.keys.size
+double_group = Hash.new(0)
 unique_group.each do |k,v|
 	v = v.uniq
+	unique_group[k] = v
 	if v.size  > 1
 		double_group_count += 1
+		double_group[k] = v
 	else
 		unique_group_count += 1
 	end
@@ -35,8 +38,13 @@ end
 puts "Total groups : #{group_count}"
 puts "Total unique groups : #{unique_group_count}"
 puts "Total double groups : #{double_group_count}"
-#File.open('./unique_group.txt','w+') do |output|
-#	unique_group.keys.each do |ele|
-#		output.puts ele
-#	end
-#end
+File.open('./unique_group.txt','w+') do |output|
+	unique_group.each  do |k,v|
+		output.puts "#{k}\t#{v}"
+	end
+end
+File.open('./double_group.txt','w+') do |output|
+	double_group.each  do |k,v|
+		output.puts "#{k}\t#{v}"
+	end
+end
