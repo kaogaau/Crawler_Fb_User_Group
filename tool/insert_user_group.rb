@@ -39,7 +39,7 @@ puts "insert members blank list"
 user_uniq.each do |id,name|
 	doc = Hash.new(0)
 	doc["latest_update_time"] = Time.now
-	doc["user_group_status"] = "never update"
+	doc["doc_status"] = "never update"
 	doc["app_scoped_user_id"] = id
 	doc["name"] = name
 	doc["groups"] = Hash.new(0)
